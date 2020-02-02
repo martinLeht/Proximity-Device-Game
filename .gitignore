@@ -98,7 +98,3 @@ webapp/server/.fusebox/
 
 # DynamoDB Local files
 webapp/server/.dynamodb/
-
-# TernJS port file
-webapp/server/.tern-port
-webapp/server/
