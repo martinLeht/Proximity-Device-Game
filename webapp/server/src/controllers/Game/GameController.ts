@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { CrudController } from '../CrudController';
 
-
 export class GameController implements CrudController {
 
     public create(req: Request, res: Response): void {

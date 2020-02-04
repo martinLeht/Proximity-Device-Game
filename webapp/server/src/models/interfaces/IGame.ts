@@ -1,9 +1,11 @@
+import { Document } from 'mongoose';
+
 export interface IGame extends Document {
     gameId: number;
     greenName: string;
     redName: string;
-    greenScore: [];
-    redScore: [];
+    greenScore: number[];
+    redScore: number[];
     createdAt: Date;
     updatedAt: Date;
 }
