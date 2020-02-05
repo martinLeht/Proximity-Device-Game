@@ -1,19 +1,16 @@
 import mongoose, { Schema } from 'mongoose';
+import { IGame } from './interfaces/IGame';
 
 //const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const GameSchema: Schema = new Schema({
-    gameId: { type: Number, required: true },
+    gameId: { type: Number},
     greenName: { type: String, default: 'Green', required: true },
     redName: { type: String, default: 'Red', required: true },
-    greenScore: [{
-        type: Number
-     }],
-    redScore: [{ 
-        type: Number
-    }],
+    greenScore: [Number],
+    redScore: [Number],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date }
 });
 
-export default mongoose.model('Game', GameSchema);
+export default mongoose.model<IGame>('Game', GameSchema);

@@ -28,20 +28,22 @@ export class App {
         });
     }
 
-    private initMiddlewares() {
+    private initMiddlewares(): void {
         this.app.use(cors());
         this.app.use(helmet());
         this.app.use(express.json());
         this.app.use(express.urlencoded());
     }
 
-    private initRoutes() {
+    private initRoutes(): void {
         this.app.use('/games', gameRouter);
     }
 
-    private establishMongoConnection(url: string) {
+    private establishMongoConnection(url: string): void {
         mongoose.connect(url, {
-            useNewUrlParser: true
+            useNewUrlParser: true,
+            useFindAndModify: false,
+            useUnifiedTopology: true
         }).then(() => {
             return console.info(`Successfully connected to ${url}`);
         }).catch(error => {
@@ -50,7 +52,7 @@ export class App {
         });
     }
 
-    public serverListen() {
+    public serverListen(): void {
 
         this.server.listen(PORT, () => {
             console.log(`Server listening at port: ${PORT}`);

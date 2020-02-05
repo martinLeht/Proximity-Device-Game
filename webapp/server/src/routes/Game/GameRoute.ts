@@ -5,18 +5,42 @@ export const router = express.Router({
     strict: true
 });
 
-router.post('/', (req: Request, res: Response) => {
-    gameController.create(req, res);
+router.post('/', async (req: Request, res: Response) => {
+    const result: any = await gameController.create(req, res);
+    if (result['error']) throw Error(result['error']);
+    else {
+        res.json(result);
+    }
 });
 
-router.get('/', (req: Request, res: Response) => {
-    gameController.read(req, res);
+router.get('/', async (req: Request, res: Response) => {
+    const result:any = await gameController.read(req, res);
+    if (result['error']) throw Error(result['error']);
+    else {
+        res.json(result);
+    }
 });
 
-router.patch('/', (req: Request, res: Response) => {
-    gameController.update(req, res);
+router.get('/:id', async (req: Request, res: Response) => {
+    const result: any = await gameController.findById(req, res);
+    if (result['error']) throw Error(result['error']);
+    else {
+        res.json(result);
+    }
 });
 
-router.delete('/', (req: Request, res: Response) => {
-    gameController.delete(req, res);
+router.patch('/:id', async (req: Request, res: Response) => {
+    const result: any = await gameController.update(req, res);
+    if (result['error']) throw Error(result['error']);
+    else {
+        res.json(result);
+    }
+});
+
+router.delete('/:id', async (req: Request, res: Response) => {
+    const result: any = await gameController.delete(req, res);
+    if (result['error']) throw Error(result['error']);
+    else {
+        res.json(result);
+    }
 });
