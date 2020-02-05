@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import { CrudController } from '../CrudController';
 import Game from './../../models/Game';
-import { Model, Document } from 'mongoose';
 import { IGame } from '../../models/interfaces/IGame';
-import { parse } from 'querystring';
+
 
 export class GameController implements CrudController {
 
@@ -14,7 +13,6 @@ export class GameController implements CrudController {
             const redScore: number[] = req.body.redScore;
 
             const game: IGame = new Game({
-                gameId: req.body.gameId,
                 greenScore: greenScore,
                 redScore: redScore
             });

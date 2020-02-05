@@ -26,6 +26,7 @@
     "helmet": "^3.21.2",
     "mongodb": "^3.5.2",
     "mongoose": "^5.8.11",
+    "mongoose-sequence": "^5.2.2",
     "nodemon": "^2.0.2",
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5",
