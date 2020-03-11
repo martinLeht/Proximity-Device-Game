@@ -98,3 +98,50 @@ webapp/server/.fusebox/
 
 # DynamoDB Local files
 webapp/server/.dynamodb/
+
+
+###### CLIENT IGNORE
+webapp/client/.DS_STORE
+
+webapp/client/dist/
+webapp/client/bazel-out
+webapp/client/integration/bazel/bazel-*
+webapp/client/*.log
+webapp/client/node_modules
+
+# Include when developing application packages.
+webapp/client/pubspec.lock
+webapp/client/.c9
+webapp/client/.idea/
+webapp/client/.devcontainer/*
+webapp/client/!.devcontainer/README.md
+webapp/client/!.devcontainer/recommended-devcontainer.json
+webapp/client/!.devcontainer/recommended-Dockerfile
+webapp/client/.settings/
+webapp/client/.vscode/launch.json
+webapp/client/.vscode/settings.json
+webapp/client/.vscode/tasks.json
+webapp/client/*.swo
+webapp/client/modules/.settings
+webapp/client/modules/.vscode
+webapp/client/.vimrc
+webapp/client/.nvimrc
+
+# Don't check in secret files
+webapp/client/*secret.js
+
+# Ignore npm/yarn debug log
+webapp/client/npm-debug.log
+webapp/client/yarn-error.log
+
+# build-analytics
+webapp/client/.build-analytics
+
+# rollup-test output
+webapp/client//modules/rollup-test/dist/
+
+# User specific bazel settings
+webapp/client/.bazelrc.user
+
+webapp/client/.notes.md
+webapp/client/baseline.json

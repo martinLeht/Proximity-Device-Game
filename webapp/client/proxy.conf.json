@@ -1,0 +1,6 @@
+{
+    "/games": {
+        "target": "https://proximity-game-server.herokuapp.com",
+        "secure": false
+    }
+}
