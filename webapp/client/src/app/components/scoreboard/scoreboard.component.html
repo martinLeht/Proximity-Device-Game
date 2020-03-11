@@ -1,0 +1,65 @@
+<div class="mat-elevation-z8">
+    <form [formGroup]="gameForm" autocomplete="off">
+        <ng-container formArrayName="games">
+        <table mat-table [dataSource]="games.controls">
+                
+                <ng-container matColumnDef="gameId">
+                    <th mat-header-cell *matHeaderCellDef> Game id </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game"> 
+                        <input type="hidden" formControlName="gameid" *matCellDef="let game" value="{{game.get('gameId').value}}">
+                        {{game.get('gameId').value}} 
+                    </td>
+                </ng-container>
+ 
+                <ng-container matColumnDef="playerOne">
+                    <th mat-header-cell *matHeaderCellDef> Player 1 </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game">
+                        <mat-form-field>
+                            <input matInput formControlName="greenName" value="{{game.get('greenName').value}}">
+                        </mat-form-field>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="playerTwo">
+                    <th mat-header-cell *matHeaderCellDef> Player 2 </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game">
+                        <mat-form-field>
+                            <input matInput formControlName="redName" value="{{game.get('redName').value}}">
+                        </mat-form-field>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="playerOneScores">
+                    <th mat-header-cell *matHeaderCellDef> Player 1 Scores </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game"> {{game.get('greenScore').value}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="playerTwoScores">
+                    <th mat-header-cell *matHeaderCellDef> Player 2 Scores </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game"> {{game.get('redScore').value}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="createdAt">
+                    <th mat-header-cell *matHeaderCellDef> Game date </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game"> {{game.get('createdAt').value}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> Actions </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game"> 
+                        <div class="button-row">
+                            <button mat-flat-button color="primary" (click)="editToggle(game)">Edit</button> 
+                            <button mat-flat-button color="warn" (click)="remove(game.get('gameId').value)">Delete</button>
+                            <button *ngIf="game.enabled" mat-stroked-button color="primary" (click)="save(game)">Save</button>
+                        </div>
+                    </td>
+                </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+    </ng-container>
+    </form>
+    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+</div>
+  
