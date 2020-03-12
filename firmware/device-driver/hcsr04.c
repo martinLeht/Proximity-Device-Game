@@ -1,5 +1,5 @@
-#include "hcsr04.h"
 #include "Arduino.h"
+#include "hcsr04.h"
 
 float getDistanceCentimeter() {
   unsigned long duration;

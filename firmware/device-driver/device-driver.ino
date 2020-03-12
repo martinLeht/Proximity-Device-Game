@@ -3,8 +3,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "hcsr04.h"
+#include "led.h"
 
-//#define LED_PIN D2
 #define BUTTON_PIN A0
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -25,16 +25,22 @@ void printBottom(char* text, int textSize, int indentX = 25);
 void setup() {
   Serial.begin (9600);
   srand(time(0));
-  //pinMode(LED_PIN, OUTPUT);
+  
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(BLUE_LED_PIN, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+  
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   
   delay(100);
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C); //initialize with the I2C addr 0x3C (128x64)
   display.setTextColor(WHITE);
-  display.clearDisplay(); 
+  display.clearDisplay();
   
+  ledsOff();
 }
  
 void loop() {
@@ -67,8 +73,7 @@ void loop() {
   delay(500);
   display.clearDisplay();
   
-  */  
-  
+  */    
   animateIntro();
   delay(500);
   
@@ -96,15 +101,10 @@ void buttonDebounce() {
   }
   
   if (reading != lastButtonState) {
-    // reset the debouncing timer
     lastDebounceTime = millis();
   }
  
   if ((millis() - lastDebounceTime) > debounceDelay) {
-    // whatever the reading is at, it's been there for longer than the debounce
-    // delay, so take it as the actual current state:
- 
-    // if the button state has changed:
     if (reading != buttonState) {
       buttonState = reading;
     }
@@ -172,14 +172,20 @@ void animateRngApproximation(int randDistance) {
   display.display();
 
   for(int i=0; i < 4; ++i) {
-    if (i == 0)
-      printMiddle(".", 2, 35);
-    else if (i == 1)
-      printMiddle(".", 2, 45);
-    else if (i == 2)
-      printMiddle(".", 2, 55);
-    else if (i == 3)
-      printMiddle(".", 2, 65);
+    switch(i) {
+      case 0:
+        printMiddle(".", 2, 35);
+        break;
+      case 1:
+        printMiddle(".", 2, 45);
+        break;
+      case 2:
+        printMiddle(".", 2, 55);
+        break;
+      case 3:
+        printMiddle(".", 2, 65);
+        break;
+    }
     display.display();
     delay(1000);
   }
@@ -205,9 +211,12 @@ void animateCountDown(char* playerName) {
   char* getReadyLabel;
   if (strcmp(playerName, "g") == 0) {
     getReadyLabel = "Green get ready...";
-  } else {
+    greenLedOn();
+  } else if (strcmp(playerName, "r") == 0) {
     getReadyLabel = "Red get ready...";
+    redLedOn();
   }
+  
   for(int i=3; i > 0; --i) {
     char countBuf[2];
     snprintf(countBuf, sizeof(countBuf), "%d", i);
@@ -217,6 +226,7 @@ void animateCountDown(char* playerName) {
     display.display();
     delay(1000);
   }
+  ledsOff();
   display.clearDisplay();
   printMiddle("BEGIN!", 2);
   display.display();
