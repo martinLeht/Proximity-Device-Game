@@ -4,13 +4,19 @@
 #include <Adafruit_SSD1306.h>
 #include "hcsr04.h"
 
-
-#define LED_PIN D2
+//#define LED_PIN D2
+#define BUTTON_PIN A0
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET  LED_BUILTIN
 Adafruit_SSD1306 display(OLED_RESET);
+
+int lastButtonState = LOW;
+int buttonState = LOW;
+
+unsigned long lastDebounceTime = 0; 
+unsigned long debounceDelay = 50;  
 
 void printTop(char* text, int textSize, int indentX = 25);
 void printMiddle(char* text, int textSize, int indentX = 25);
@@ -19,7 +25,8 @@ void printBottom(char* text, int textSize, int indentX = 25);
 void setup() {
   Serial.begin (9600);
   srand(time(0));
-  pinMode(LED_PIN, OUTPUT);
+  //pinMode(LED_PIN, OUTPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   
@@ -31,6 +38,7 @@ void setup() {
 }
  
 void loop() {
+  /*
   float distance_cm = getDistanceCentimeter();
   int brightness = map((int)distance_cm, 0, 15, 0, 255);
   
@@ -59,8 +67,8 @@ void loop() {
   delay(500);
   display.clearDisplay();
   
-
-  /*
+  */  
+  
   animateIntro();
   delay(500);
   
@@ -68,12 +76,40 @@ void loop() {
   int randDistance = (rand() % (upperBound - 1 + 1)) + 1; 
   
   animateRngApproximation(randDistance);
+
   
   delay(2000);
   animateCountDown("g");
   delay(500);
   animateCountDown("r");
-  */
+  
+  
+}
+
+void buttonDebounce() {
+  delay(10);
+  int reading = 0;
+  if (analogRead(BUTTON_PIN) >= 500) {
+    reading = HIGH;
+  } else {
+    reading = LOW;
+  }
+  
+  if (reading != lastButtonState) {
+    // reset the debouncing timer
+    lastDebounceTime = millis();
+  }
+ 
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    // whatever the reading is at, it's been there for longer than the debounce
+    // delay, so take it as the actual current state:
+ 
+    // if the button state has changed:
+    if (reading != buttonState) {
+      buttonState = reading;
+    }
+  }
+  lastButtonState = reading;
 }
 
 void animateIntro() {
@@ -95,6 +131,21 @@ void animateIntro() {
   printMiddle("Choose an opponent", 1, 10);
   printBottom("as Red!", 1, 40);
   display.display();
+  delay(3000);
+  Serial.println(buttonState);
+  display.clearDisplay();
+  printMiddle("Press the button", 1, 10);
+  printBottom("when ready", 1);
+  display.display();
+  while(!buttonState) {
+    Serial.println(buttonState);
+    buttonDebounce();
+  }
+  buttonState = LOW;
+  display.clearDisplay();
+  printMiddle("OK!", 2, 40);
+  display.display();
+  
   delay(5000);
   for(int i=10; i > 0; --i) {
     char countBuf[3];
@@ -109,8 +160,6 @@ void animateIntro() {
      
     display.clearDisplay();
     printTop(labelWithCounter, 1, 10);
-    printMiddle("Choose an opponent", 1, 10);
-    printBottom("as Red!", 1, 40);
     display.display();
     delay(1000);
     free(labelWithCounter);
