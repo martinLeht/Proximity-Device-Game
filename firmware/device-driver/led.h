@@ -1,3 +1,9 @@
+/*
+ * File name: led.h
+ * Authors: Martin Lehtomaa, Joni Tuomisto
+ * Description: Header file for led.c
+ */
+
 #ifndef _LED_H    
 #define _LED_H  
 

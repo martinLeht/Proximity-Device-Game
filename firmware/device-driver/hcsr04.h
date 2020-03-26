@@ -1,3 +1,9 @@
+/*
+ * File name: hcsr04.h
+ * Authors: Martin Lehtomaa, Joni Tuomisto
+ * Description: header file for hcsr04.c
+ */
+ 
 #ifndef _HCSR04_H    
 #define _HCSR04_H   
 

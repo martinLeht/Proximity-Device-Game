@@ -1,3 +1,9 @@
+/*
+ * File name: hcsr04.c
+ * Authors: Martin Lehtomaa, Joni Tuomisto
+ * Description: File contains logic to retrun a distance in cm
+ */
+
 #include "Arduino.h"
 #include "hcsr04.h"
 

@@ -1,3 +1,9 @@
+/*
+ * File name: led.c
+ * Authors: Martin Lehtomaa, Joni Tuomisto
+ * Description: File contains logic toggle on and off leds
+ */
+ 
 #include "Arduino.h"
 #include "led.h"
 
