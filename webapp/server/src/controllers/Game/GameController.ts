@@ -6,6 +6,7 @@ import { IGame } from '../../models/interfaces/IGame';
 
 export class GameController implements CrudController {
 
+    // Creates a game entry with provided scores.
     public async create(req: Request, res: Response): Promise<any> {
         
         return new Promise<any>(async (resolve, reject) => {
@@ -33,6 +34,7 @@ export class GameController implements CrudController {
         
     }    
     
+    // Fetches all the games from mongoDb
     public async read(req: Request, res: Response): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
             try {
@@ -47,6 +49,7 @@ export class GameController implements CrudController {
         });
     }
 
+    // Fetches a game entry by id
     public async findById(req: Request, res: Response): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
             const id: number = parseInt(req.params.id);
@@ -63,6 +66,7 @@ export class GameController implements CrudController {
         });
     }
 
+    // Updates a game by given id
     public async update(req: Request, res: Response): Promise<any> {
         return new Promise<any>(async (resolve, reject)=> {
             const id: number = parseInt(req.params.id);
@@ -95,6 +99,7 @@ export class GameController implements CrudController {
         });
     }
 
+    // Deletes a game with given id
     public async delete(req: Request, res: Response): Promise<any> {
         return new Promise<any>(async (resolve, reject) => {
             const id: number = parseInt(req.params.id);
@@ -114,6 +119,7 @@ export class GameController implements CrudController {
         });
     }
 
+    // Parses the entry with right names
     private parse(entry: any) {
         return {
             gameId: entry["gameId"],
@@ -126,6 +132,7 @@ export class GameController implements CrudController {
         };
     }
 
+    // Cleans out the field that are empty
     private clean(data: any): any {
         for (let prop in data) { 
             if (data[prop] === null || data[prop] === undefined) {

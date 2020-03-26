@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-
+// Abstract class to define a controller with CRUD functionalities
 export abstract class CrudController {
 
     public abstract create(req: Request, res: Response): void;

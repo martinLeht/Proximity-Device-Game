@@ -7,6 +7,8 @@ import mongoose, { Connection } from 'mongoose';
 import { gameRouter } from './routes';
 import { PORT, MONGO_URI } from './config/config';
 
+
+// Base application class or "Front Controller"
 export class App {
 
     private app: express.Application;
@@ -28,6 +30,7 @@ export class App {
         });
     }
 
+    // Initialises middleware
     private initMiddlewares(): void {
         this.app.use(cors());
         this.app.use(helmet());
@@ -35,10 +38,12 @@ export class App {
         this.app.use(express.urlencoded());
     }
 
+    // Initiates the routes
     private initRoutes(): void {
         this.app.use('/games', gameRouter);
     }
 
+    // Creates a connection to the mongo database
     private establishMongoConnection(url: string): void {
         mongoose.connect(url, {
             useNewUrlParser: true,
@@ -52,6 +57,7 @@ export class App {
         });
     }
 
+    // Starts listening on the server
     public serverListen(): void {
 
         this.server.listen(PORT, () => {
