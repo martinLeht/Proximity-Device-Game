@@ -15,6 +15,8 @@ extern "C" {
 #endif
 
 float getDistanceCentimeter();
+float measure();
+
 #ifdef __cplusplus
 }
 #endif
