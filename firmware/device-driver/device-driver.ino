@@ -58,15 +58,13 @@ void setup() {
   
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
-
-  // Reset the trigger pin
-  digitalWrite(TRIG_PIN, LOW);
   
   delay(600);
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C); //initialize with the I2C addr 0x3C (128x64)
   display.setTextColor(WHITE);
   display.clearDisplay();
 
+  // Doing a sample call to reset the pins
   getDistanceCentimeter();
   ledsOff();
 }
@@ -355,12 +353,17 @@ void animateAndDisplayWinner(char* winner, int greenClosest, int redClosest, int
     distanceCm = combineStringAndDigit(centimeter, greenClosest, false);
     closestDistanceLabel = concatenate(closestLabel, distanceCm);
     greenLedOn();
-  } else if (winner== "Red") {
+  } else if (winner == "Red") {
     printMiddle(winner, 2, 40);
     
     distanceCm = combineStringAndDigit(centimeter, redClosest, false);
     closestDistanceLabel = concatenate(closestLabel, distanceCm);
     redLedOn();
+  } else if (winner == "Tie") {
+    printMiddle("It's a tie!", 1, 30);
+    // Because it's a tie, it does not matter whose closest value gets printed
+    distanceCm = combineStringAndDigit(centimeter, greenClosest, false);
+    closestDistanceLabel = concatenate(closestLabel, distanceCm);
   }
   display.display();
   delay(3000);
@@ -473,10 +476,14 @@ void determineWinner(char **result, int greenScores[], int redScores[], int *gre
     *result = (char*)malloc((5 + 1) * sizeof(char));
     if (*result == NULL) return;
     *result = "Green";
-  } else {
+  } else if (abs(*redClosest - goalValue) < abs(*greenClosest - goalValue) ) {
     *result = (char*)malloc((3 + 1) * sizeof(char));
     if (*result == NULL) return;
     *result = "Red";
+  } else {
+    *result = (char*)malloc((3 + 1) * sizeof(char));
+    if (*result == NULL) return;
+    *result = "Tie";
   }
 }
 
