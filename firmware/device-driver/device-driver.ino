@@ -5,8 +5,11 @@
  *              but the functionality from components, like HC-SR04 sensor, is remotely called
  *              from through methods from implemented libraries.
  */
-
-
+ 
+#include <WiFiClientSecure.h> 
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WiFi.h>
+#include <ArduinoJson.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -24,6 +27,15 @@
 #define OLED_RESET  LED_BUILTIN
 Adafruit_SSD1306 display(OLED_RESET);
 
+// Use this to get length of an array
+#define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+const char* ssid = "Saitaman Puhelin"; 
+const char* password = "HeroSaitama666"; 
+const char* host = "proximity-game-server.herokuapp.com";
+const char* apiEntryPoint = "/games";
+const char* fingerPrint = "083b717202436ecaed428693ba7edf81c4bc6230";
+
 // Global variables to implement button interaction
 int lastButtonState = LOW;
 int buttonState = LOW;
@@ -38,16 +50,27 @@ void animateCountDown(char* playerName);
 void animteMeasureDistanceTime();
 void animateAndDisplayWinner(char *winner, int, int, int);
 void animateScoreBoard(int[], int[]);
-void animateSavePrompt();
+bool animateSavePrompt();
+void animateSaving();
+void animateSaveDone(bool);
+void animateGameFinished(); 
 void printTop(char* text, int, int indentX = 25);
 void printMiddle(char* text, int, int indentX = 25);
 void printBottom(char* text, int, int indentX = 25);
 void determineWinner(char **result, int[], int[], int, int, int);
+
+// Helper methods
 char* combineStringAndDigit(const char* string, int, bool digitAfterString = true);
 char* concatenate(const char* first, const char* second);
 
+// Wifi connectivity methods
+bool saveScoresToDatabase(int[], int[]);
+
 void setup() {
   Serial.begin (9600);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);   //WiFi connection
+
   srand(time(0));
   
   pinMode(RED_LED_PIN, OUTPUT);
@@ -120,8 +143,8 @@ void loop() {
   
   delay(2000);
 
-  int greenScore[3];
-  int redScore[3];
+  int greenScores[3];
+  int redScores[3];
   int distance_cm = 0;
   // Each player gets 3 times to try to measure the distance within a 5 seconds laps
   for (int i = 0; i < 3; ++i) {
@@ -133,7 +156,7 @@ void loop() {
       Serial.print("Green measured: ");
       Serial.println(distance_cm);
       
-      greenScore[i] = distance_cm;
+      greenScores[i] = distance_cm;
       displayMeasurement(distance_cm);
 
       // Then reds turn
@@ -144,7 +167,7 @@ void loop() {
       Serial.print("Red measured: ");
       Serial.println(distance_cm);
       
-      redScore[i] = distance_cm;
+      redScores[i] = distance_cm;
 
       displayMeasurement(distance_cm);
   }
@@ -153,7 +176,7 @@ void loop() {
   int greenClosest = 0, redClosest = 0;
 
   // Determine the winner: assign the result and each players closest score to dedicated variablse
-  determineWinner(&winnerResult, greenScore, redScore, &greenClosest, &redClosest, randDistance);
+  determineWinner(&winnerResult, greenScores, redScores, &greenClosest, &redClosest, randDistance);
   
   Serial.print("Green Closest: ");
   Serial.println(greenClosest);
@@ -162,13 +185,31 @@ void loop() {
 
   animateAndDisplayWinner(winnerResult, greenClosest, redClosest, randDistance);
   
-  animateScoreBoard(greenScore, redScore);
-  animateSavePrompt();
+  animateScoreBoard(greenScores, redScores);
+  bool saveScores = animateSavePrompt();
+
+  if (saveScores) {
+    animateSaving();
+    bool saveSuccess = saveScoresToDatabase(greenScores, redScores);
+    Serial.println("DATA SAVED!");
+    animateSaveDone(saveSuccess);
+  }
+  animateGameFinished();
   
   Serial.println("------GAME DONE------");
   
   display.clearDisplay();
   ledsOff();
+  
+  /*
+  int greenScores[3] = { 1, 2, 3 };
+  int redScores[3] = { 4, 5, 6 };
+  bool saveSuccess = saveScoresToDatabase(greenScores, redScores);
+  if (saveSuccess) {
+    
+  }
+  */
+  delay(5000);
 }
 
 // Button debounce method
@@ -410,7 +451,7 @@ void animateScoreBoard(int greenScores[], int redScores[]) {
   delay(10000);
 }
 
-void animateSavePrompt() {
+bool animateSavePrompt() {
   display.clearDisplay();
   printTop("Press the button", 1, 20);
   printMiddle("if you want to", 1, 20);
@@ -422,10 +463,52 @@ void animateSavePrompt() {
     if (buttonState) {
       Serial.println("Saving scores to external database...");
       buttonState = LOW;
-      break;
+      return true;
     }
     delay(100);
   }
+  return false;
+}
+
+void animateSaving() {
+  display.clearDisplay();
+  printTop("Saving scores", 1);
+  display.display();
+
+  for(int i=0; i < 3; ++i) {
+    switch(i) {
+      case 0:
+        printMiddle(".", 2, 45);
+        break;
+      case 1:
+        printMiddle(".", 2, 55);
+        break;
+      case 2:
+        printMiddle(".", 2, 65);
+        break;
+    }
+    display.display();
+    delay(700);
+  }
+}
+
+void animateSaveDone(bool success) {
+  display.clearDisplay();
+  if (success) {
+    printMiddle("Successfully saved!", 1, 10);
+  } else {
+    printMiddle("Something went wrong", 1, 10);
+  }
+  display.display();
+  delay(2000);
+}
+
+void animateGameFinished() {
+  display.clearDisplay();
+  printMiddle("Hope you had fun", 1, 10);
+  printBottom("Till next time!", 1, 15);
+  display.display();
+  delay(3000);
 }
 
 // Prints the provided text on top of the the UI screen with fixed Y positioning
@@ -507,11 +590,143 @@ char* combineStringAndDigit(const char* string, int num, bool digitAfterString) 
 }
 
 char* concatenate(const char* first, const char* second) {
-    const size_t len1 = strlen(first);
-    const size_t len2 = strlen(second);
-    char* result = (char*) malloc(len1 + len2 + 1);
+  const size_t len1 = strlen(first);
+  const size_t len2 = strlen(second);
+  char* result = (char*) malloc(len1 + len2 + 1);
+  
+  memcpy(result, first, len1);
+  memcpy(result + len1, second, len2 + 1);
+  return result;
+}
+
+bool saveScoresToDatabase(int greenScores[], int redScores[]) {
+  while (WiFi.status() != WL_CONNECTED) {  //Wait for the WiFI connection completion
+  
+    delay(500);
+    Serial.println("Waiting for connection...");
+  } 
+  if(WiFi.status() == WL_CONNECTED) {
+
+    const size_t CAPACITY = JSON_OBJECT_SIZE(2) + JSON_ARRAY_SIZE(6) + 11 + 11;
+    Serial.print("Capacity for JSON document calculates: ");
+    Serial.println(CAPACITY);
     
-    memcpy(result, first, len1);
-    memcpy(result + len1, second, len2 + 1);
-    return result;
+    StaticJsonDocument<CAPACITY> doc;
+
+    // Creating a string representation of the scores (
+    // then serializing the strings to the json document.
+    char* greenScoresChar = "[";
+    char* redScoresChar = "[";
+    for (int i = 0; i < 3; ++i) {
+      
+      greenScoresChar = combineStringAndDigit(greenScoresChar, greenScores[i]);
+      redScoresChar = combineStringAndDigit(redScoresChar, redScores[i]);
+      if (i < 2) {
+        greenScoresChar = concatenate(greenScoresChar, ",");
+        redScoresChar = concatenate(redScoresChar, ",");
+      }
+    }
+
+    // Should contain now a string representation of the integer lists (scores)
+    greenScoresChar = concatenate(greenScoresChar, "]");
+    redScoresChar = concatenate(redScoresChar, "]");
+
+    // Serializing the scores to JSON doc
+    doc["greenScore"] = serialized(greenScoresChar);
+    doc["redScore"] = serialized(redScoresChar);
+
+    // Buffer to store the JSON doc as string, which will be sent in the request
+    char jsonDataBuffer[CAPACITY];
+    size_t dataLength = serializeJson(doc, jsonDataBuffer);
+    
+    // Print data to serial
+    Serial.println("------Data to be saved------");
+    Serial.print("Length: ");
+    Serial.println(dataLength);
+    Serial.println("Data:");
+    Serial.println(jsonDataBuffer);
+
+    // Freeing the allocated memory for the scores
+    free(greenScoresChar);
+    free(redScoresChar);
+    
+    // HTTPS
+    WiFiClientSecure httpsClient;
+    Serial.println(host);
+ 
+    Serial.printf("Using fingerprint '%s'\n", fingerPrint);
+    httpsClient.setFingerprint(fingerPrint);
+    httpsClient.setTimeout(15000); // 15 Seconds
+    delay(1000);
+    
+    Serial.print("HTTPS Connecting");
+    int r=0; //retry counter
+    const int httpsPort = 443; // HTTPS port
+    while((!httpsClient.connect(host, httpsPort)) && (r < 30)){
+        delay(100);
+        Serial.print(".");
+        r++;
+    }
+    if(r==30) {
+      Serial.println(" --> Connection failed");
+      return false;
+    } else {
+      Serial.println(" --> Connected to web");
+      if (httpsClient.verify(fingerPrint, host)) {
+        Serial.println("certificate matches");
+      } else {
+        Serial.println("certificate doesn't match");
+        return false;
+      }
+    }
+
+    /* ANOTHER WAY
+    httpsClient.print("POST ");
+    httpsClient.print(apiEntryPoint);
+    httpsClient.println(" HTTP/1.1");
+    httpsClient.print("Host: ");
+    httpsClient.println(host);
+    httpsClient.println("Connection: close");
+    httpsClient.println("Content-Type: application/json");
+    httpsClient.print("Content-Length: ");
+    httpsClient.println(bufferLength);
+    httpsClient.println();
+    httpsClient.println(jsonDataBuffer);
+    */
+    // Forming the POST request
+    httpsClient.print(String("POST ") + apiEntryPoint + " HTTP/1.1\r\n" +
+                      "Host: " + host + "\r\n" +
+                      "Connection: close\r\n" +
+                      "Content-Type: application/json\r\n" +
+                      "Content-Length: " + dataLength + "\r\n" +
+                      + "\r\n" +
+                      jsonDataBuffer + "\r\n");
+    
+    /*
+    // Forming the test GET request
+    httpsClient.print(String("GET ") + "/games/3 HTTP/1.1\r\n" +
+                      "Host: " + host + "\r\n" +
+                      "Connection: close\r\n\r\n");
+    */
+    Serial.println("Sent the request");
+    unsigned long timeout = millis();
+    while (httpsClient.available() == 0) {
+      if (millis() - timeout > 5000) {
+        Serial.println(">>> Client Timeout !");
+        httpsClient.stop();
+        return false;
+      }
+    }
+    while (httpsClient.connected()) {
+      String line = httpsClient.readStringUntil('\n');
+      if (line == "\r") {
+        Serial.println("headers received");
+        return true;
+      }  
+    }
+  } else {
+    Serial.println("Error in WiFi connection");
+    return false; 
+  }
+  
 }
