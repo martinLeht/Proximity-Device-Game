@@ -30,11 +30,11 @@ Adafruit_SSD1306 display(OLED_RESET);
 // Use this to get length of an array
 #define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-const char* ssid = "Saitaman Puhelin"; 
-const char* password = "HeroSaitama666"; 
+const char* ssid = "XXX"; 
+const char* password = "XXX"; 
 const char* host = "proximity-game-server.herokuapp.com";
 const char* apiEntryPoint = "/games";
-const char* fingerPrint = "083b717202436ecaed428693ba7edf81c4bc6230";
+const char* fingerPrint = "XXX";
 
 // Global variables to implement button interaction
 int lastButtonState = LOW;
