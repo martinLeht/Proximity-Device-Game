@@ -30,11 +30,14 @@ Adafruit_SSD1306 display(OLED_RESET);
 // Use this to get length of an array
 #define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-const char* ssid = "XXX"; 
-const char* password = "XXX"; 
+// Declare variables for wifi credntials
+const char* ssid = "Saitaman Puhelin"; 
+const char* password = "HeroSaitama666";
+ 
+// Define API credentials (SHA-2 fingerprint needed inorder to connect to HTTPS)
 const char* host = "proximity-game-server.herokuapp.com";
 const char* apiEntryPoint = "/games";
-const char* fingerPrint = "XXX";
+const char* fingerPrint = "083b717202436ecaed428693ba7edf81c4bc6230";
 
 // Global variables to implement button interaction
 int lastButtonState = LOW;
@@ -68,11 +71,15 @@ bool saveScoresToDatabase(int[], int[]);
 
 void setup() {
   Serial.begin (9600);
+
+  // Initialize wifi config
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);   //WiFi connection
 
+  // Seed the random number generator
   srand(time(0));
-  
+
+  // Initialize pins to sensors
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(BLUE_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
@@ -83,6 +90,8 @@ void setup() {
   pinMode(ECHO_PIN, INPUT);
   
   delay(600);
+
+  // Initialize the I2C OLED UI
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C); //initialize with the I2C addr 0x3C (128x64)
   display.setTextColor(WHITE);
   display.clearDisplay();
@@ -130,6 +139,8 @@ void loop() {
   display.clearDisplay();
 
   // Game driver logic
+
+  // Animete intro to the game and choose players
   animateIntro();
   delay(500);
 
@@ -138,14 +149,17 @@ void loop() {
   int randDistance = (rand() % (upperBound - 1 + 1)) + 1; 
 
   // Passes the random distance to the animation method
+  // Displays the generated number, which is going to be the goal to proximate
   animateRngApproximation(randDistance);
 
   
   delay(2000);
 
+  // Declaring variablse where to store player scores and measured distance
   int greenScores[3];
   int redScores[3];
   int distance_cm = 0;
+  
   // Each player gets 3 times to try to measure the distance within a 5 seconds laps
   for (int i = 0; i < 3; ++i) {
       // Starts with greens turn
@@ -157,6 +171,7 @@ void loop() {
       Serial.println(distance_cm);
       
       greenScores[i] = distance_cm;
+      // Displays greens measurement
       displayMeasurement(distance_cm);
 
       // Then reds turn
@@ -168,10 +183,12 @@ void loop() {
       Serial.println(distance_cm);
       
       redScores[i] = distance_cm;
-
+      // Displays reds measurement
       displayMeasurement(distance_cm);
   }
 
+  // Declare variables where game result (winner or tie) 
+  // And the closest measurements each player had to the goal
   char *winnerResult;
   int greenClosest = 0, redClosest = 0;
 
@@ -183,32 +200,35 @@ void loop() {
   Serial.print("Red Closest: ");
   Serial.println(redClosest);
 
+  // Displayes the winner and the closest score and the goal distance
   animateAndDisplayWinner(winnerResult, greenClosest, redClosest, randDistance);
-  
+
+  // Animates a scoreboard constructed of both players 3 measurements
   animateScoreBoard(greenScores, redScores);
+
+  // Promt if user wants to save scores
+  // Button pressed --> true
+  // If button is not pressed in 5 sec --> false
   bool saveScores = animateSavePrompt();
 
   if (saveScores) {
     animateSaving();
+    // Save scores to database and return true if its successful, else return false
     bool saveSuccess = saveScoresToDatabase(greenScores, redScores);
     Serial.println("DATA SAVED!");
+
+    // Prompt if Saving was successful
     animateSaveDone(saveSuccess);
   }
+
+  // Animate that game is finished
   animateGameFinished();
   
   Serial.println("------GAME DONE------");
-  
+
+  // Clear display an turn leds off
   display.clearDisplay();
   ledsOff();
-  
-  /*
-  int greenScores[3] = { 1, 2, 3 };
-  int redScores[3] = { 4, 5, 6 };
-  bool saveSuccess = saveScoresToDatabase(greenScores, redScores);
-  if (saveSuccess) {
-    
-  }
-  */
   delay(5000);
 }
 
@@ -572,6 +592,7 @@ void determineWinner(char **result, int greenScores[], int redScores[], int *gre
 
 
 // Helper method to combine a string with a digit
+// Remember to free the allocated memory after use
 char* combineStringAndDigit(const char* string, int num, bool digitAfterString) {
   char digitBuf[sizeof(num) + 1];
   snprintf(digitBuf, sizeof(digitBuf), "%d", num);
@@ -589,6 +610,9 @@ char* combineStringAndDigit(const char* string, int num, bool digitAfterString) 
   return stringWithDigit;
 }
 
+
+// Method to concatenate/combine two char arrays
+// Remember to free the allocated memory after use
 char* concatenate(const char* first, const char* second) {
   const size_t len1 = strlen(first);
   const size_t len2 = strlen(second);
@@ -599,18 +623,33 @@ char* concatenate(const char* first, const char* second) {
   return result;
 }
 
+/*
+ * Method to save user scores to database.
+ * Makes a POST request to the defined API via secure wifi client.
+ * Connects to the driver to wifi and establishes connection to the host server
+ * with the secure wifi client. 
+ * Creates a JSON representation of both players scores
+ * and sends them in a HTTP POST request to the API.
+ * 
+ * Returns: true, IF everything goes well, else return false          
+ */
 bool saveScoresToDatabase(int greenScores[], int redScores[]) {
-  while (WiFi.status() != WL_CONNECTED) {  //Wait for the WiFI connection completion
+  //Wait for the WiFI connection completion
+  while (WiFi.status() != WL_CONNECTED) {  
   
     delay(500);
     Serial.println("Waiting for connection...");
   } 
+
+  // If its connected to the wifi, start the work
   if(WiFi.status() == WL_CONNECTED) {
 
+    // Determine capacity for the Json Document to statically
+    // allocate only necessary amount of memory
     const size_t CAPACITY = JSON_OBJECT_SIZE(2) + JSON_ARRAY_SIZE(6) + 11 + 11;
     Serial.print("Capacity for JSON document calculates: ");
     Serial.println(CAPACITY);
-    
+
     StaticJsonDocument<CAPACITY> doc;
 
     // Creating a string representation of the scores (
@@ -618,7 +657,6 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
     char* greenScoresChar = "[";
     char* redScoresChar = "[";
     for (int i = 0; i < 3; ++i) {
-      
       greenScoresChar = combineStringAndDigit(greenScoresChar, greenScores[i]);
       redScoresChar = combineStringAndDigit(redScoresChar, redScores[i]);
       if (i < 2) {
@@ -637,9 +675,11 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
 
     // Buffer to store the JSON doc as string, which will be sent in the request
     char jsonDataBuffer[CAPACITY];
+    // Serialize the document to a string representation of the object
+    // and save the serialized size of the data to be saved
     size_t dataLength = serializeJson(doc, jsonDataBuffer);
     
-    // Print data to serial
+    // Print data that is going to be saved serial
     Serial.println("------Data to be saved------");
     Serial.print("Length: ");
     Serial.println(dataLength);
@@ -650,10 +690,11 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
     free(greenScoresChar);
     free(redScoresChar);
     
-    // HTTPS
+    // Secure HTTPS client
     WiFiClientSecure httpsClient;
+
+    // Print the host and SHA-2 finger print and set the fingerprint to the client
     Serial.println(host);
- 
     Serial.printf("Using fingerprint '%s'\n", fingerPrint);
     httpsClient.setFingerprint(fingerPrint);
     httpsClient.setTimeout(15000); // 15 Seconds
@@ -662,6 +703,7 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
     Serial.print("HTTPS Connecting");
     int r=0; //retry counter
     const int httpsPort = 443; // HTTPS port
+    // Retries max 30 times to connect to the host
     while((!httpsClient.connect(host, httpsPort)) && (r < 30)){
         delay(100);
         Serial.print(".");
@@ -672,6 +714,8 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
       return false;
     } else {
       Serial.println(" --> Connected to web");
+
+      // If connection is successful, verify the fingerprint
       if (httpsClient.verify(fingerPrint, host)) {
         Serial.println("certificate matches");
       } else {
@@ -680,7 +724,7 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
       }
     }
 
-    /* ANOTHER WAY
+    /* ANOTHER WAY to form the POST request
     httpsClient.print("POST ");
     httpsClient.print(apiEntryPoint);
     httpsClient.println(" HTTP/1.1");
@@ -709,6 +753,8 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
                       "Connection: close\r\n\r\n");
     */
     Serial.println("Sent the request");
+
+    // Wait max 5 seconds for response, then throw timeout
     unsigned long timeout = millis();
     while (httpsClient.available() == 0) {
       if (millis() - timeout > 5000) {
@@ -717,6 +763,9 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
         return false;
       }
     }
+
+    // Reads the response header to confirm that 
+    // the request was successful
     while (httpsClient.connected()) {
       String line = httpsClient.readStringUntil('\n');
       if (line == "\r") {
@@ -724,7 +773,7 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
         return true;
       }  
     }
-  } else {
+  } else { // Whole wifi connecting went wrong
     Serial.println("Error in WiFi connection");
     return false; 
   }
