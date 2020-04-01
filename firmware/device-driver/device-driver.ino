@@ -31,8 +31,8 @@ Adafruit_SSD1306 display(OLED_RESET);
 #define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // Declare variables for wifi credntials
-const char* ssid = "Saitaman Puhelin"; 
-const char* password = "HeroSaitama666";
+const char* ssid = "XXX"; 
+const char* password = "XXX";
  
 // Define API credentials (SHA-2 fingerprint needed inorder to connect to HTTPS)
 const char* host = "proximity-game-server.herokuapp.com";
@@ -47,7 +47,8 @@ unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;  
 
 // Function declerations to UI print methods
-void animateIntro();
+void animateDeviceIntro();
+void animateGameIntro();
 void animateRngApproximation(int);
 void animateCountDown(char* playerName);
 void animteMeasureDistanceTime();
@@ -102,66 +103,100 @@ void setup() {
 }
  
 void loop() {
-  /* This blcok prints real-time distance measuring on the UI screen.
-   * It is commented out for now, once the game functionality is at place,
-   * we might add it as an option/tool to the device.
-  float distance_cm = getDistanceCentimeter();
-  int brightness = map((int)distance_cm, 0, 15, 0, 255);
+  /* 
+   * This drives the logic of measuring distance in real-time and
+   * a game that requires 2 players. If the user presses the button within 10 sec
+   * of powering up the device, it will act as a measuring tool. After the 10 sec
+   * the device will start the game. While user is in measuring mode, exiting happens
+   * by pressing the button again.
+   */
+   
+  animateDeviceIntro();
   
-  display.setCursor(25,0); 
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.println("Distance Meter");
-  
-  display.setCursor(10,10); //oled display
-  display.setTextColor(WHITE);
-  display.println(distance_cm);
-  display.setCursor(90,10);
-  display.println("cm");
-  Serial.print(distance_cm);
-  Serial.println("cm");
-
-  if (distance_cm <= 15) {
-    analogWrite(LED_PIN, 255 - brightness);
-    Serial.println("Getting too close!");
-    display.println("Getting too close!");
-  } else {
-    digitalWrite(LED_PIN, LOW);
+  unsigned long timer = millis();
+  bool useAsTool = false;
+  while (true) {
+    buttonDebounce();
+    if (buttonState == HIGH) {
+      display.clearDisplay();
+      Serial.println("Starting the measurement tool");
+      useAsTool = true;
+      buttonState = LOW;      
+      break;
+    }
+    if (millis() - timer > 10000) {
+      display.clearDisplay();
+      Serial.println("Button was not pressed, starting the game");
+      useAsTool = false;
+      break;
+    }
   }
-  display.display();
-  
-  delay(500);
-  display.clearDisplay();
-  
-  */  
-
-  
-  display.clearDisplay();
-
-  // Game driver logic
-
-  // Animete intro to the game and choose players
-  animateIntro();
   delay(500);
 
-  // Calculates a random distance (cm) within 300cm (3m)
-  int upperBound = 300;
-  int randDistance = (rand() % (upperBound - 1 + 1)) + 1; 
+  // Checks if user wants to use the device as a tool.
+  // (If user pressed the button or not inn the 10 sec time limit)
+  if (useAsTool) {
+    // Measures and displays real-time distance on the screen.
+    // Lightens up the led when getting in 10 cm range
+    // and gradually brightens it up when getting closer.
+    while (buttonState == LOW) {
+      buttonDebounce();
+      float distance_cm = getDistanceCentimeter();
 
-  // Passes the random distance to the animation method
-  // Displays the generated number, which is going to be the goal to proximate
-  animateRngApproximation(randDistance);
+      // Determine brightness by mapping the distance from 
+      // 0-10cm to 0-255 bit value
+      int brightness = map((int)distance_cm, 0, 10, 0, 255);
+      
+      printTop("Distance Meter",1);
+      display.setCursor(10,10); 
+      display.setTextColor(WHITE);
+      display.println(distance_cm);
+      display.setCursor(90,10);
+      display.println("cm");
+      Serial.print(distance_cm);
+      Serial.println("cm");
 
+      // Checks if the range limit is closing in
+      if (distance_cm <= 10) {
+        analogWrite(RED_LED_PIN, 255 - brightness);
+        Serial.println("Getting too close!");
+        display.println("Getting too close!");
+      } else {
+        digitalWrite(RED_LED_PIN, LOW);
+      }
+      display.display();
+      buttonDebounce();
+      
+      delay(200);
+      display.clearDisplay();
+    }
+    // reset button state
+    buttonState = LOW;
+  } else { 
+    display.clearDisplay();
+    // Game driver logic
   
-  delay(2000);
-
-  // Declaring variablse where to store player scores and measured distance
-  int greenScores[3];
-  int redScores[3];
-  int distance_cm = 0;
+    // Animete intro to the game and choose players
+    animateGameIntro();
+    delay(500);
   
-  // Each player gets 3 times to try to measure the distance within a 5 seconds laps
-  for (int i = 0; i < 3; ++i) {
+    // Calculates a random distance (cm) within 300cm (3m)
+    int upperBound = 300;
+    int randDistance = (rand() % (upperBound - 1 + 1)) + 1; 
+  
+    // Passes the random distance to the animation method
+    // Displays the generated number, which is going to be the goal to proximate
+    animateRngApproximation(randDistance);
+  
+    delay(2000);
+  
+    // Declaring variablse where to store player scores and measured distance
+    int greenScores[3];
+    int redScores[3];
+    int distance_cm = 0;
+    
+    // Each player gets 3 times to try to measure the distance within a 5 seconds laps
+    for (int i = 0; i < 3; ++i) {
       // Starts with greens turn
       // Animates countdown to green player
       animateCountDown("g");
@@ -185,51 +220,52 @@ void loop() {
       redScores[i] = distance_cm;
       // Displays reds measurement
       displayMeasurement(distance_cm);
-  }
-
-  // Declare variables where game result (winner or tie) 
-  // And the closest measurements each player had to the goal
-  char *winnerResult;
-  int greenClosest = 0, redClosest = 0;
-
-  // Determine the winner: assign the result and each players closest score to dedicated variablse
-  determineWinner(&winnerResult, greenScores, redScores, &greenClosest, &redClosest, randDistance);
+    }
   
-  Serial.print("Green Closest: ");
-  Serial.println(greenClosest);
-  Serial.print("Red Closest: ");
-  Serial.println(redClosest);
-
-  // Displayes the winner and the closest score and the goal distance
-  animateAndDisplayWinner(winnerResult, greenClosest, redClosest, randDistance);
-
-  // Animates a scoreboard constructed of both players 3 measurements
-  animateScoreBoard(greenScores, redScores);
-
-  // Promt if user wants to save scores
-  // Button pressed --> true
-  // If button is not pressed in 5 sec --> false
-  bool saveScores = animateSavePrompt();
-
-  if (saveScores) {
-    animateSaving();
-    // Save scores to database and return true if its successful, else return false
-    bool saveSuccess = saveScoresToDatabase(greenScores, redScores);
-    Serial.println("DATA SAVED!");
-
-    // Prompt if Saving was successful
-    animateSaveDone(saveSuccess);
-  }
-
-  // Animate that game is finished
-  animateGameFinished();
+    // Declare variables where game result (winner or tie) 
+    // And the closest measurements each player had to the goal
+    char *winnerResult;
+    int greenClosest = 0, redClosest = 0;
   
-  Serial.println("------GAME DONE------");
-
-  // Clear display an turn leds off
-  display.clearDisplay();
-  ledsOff();
-  delay(5000);
+    // Determine the winner: assign the result and each players closest score to dedicated variablse
+    determineWinner(&winnerResult, greenScores, redScores, &greenClosest, &redClosest, randDistance);
+    
+    Serial.print("Green Closest: ");
+    Serial.println(greenClosest);
+    Serial.print("Red Closest: ");
+    Serial.println(redClosest);
+  
+    // Displayes the winner and the closest score and the goal distance
+    animateAndDisplayWinner(winnerResult, greenClosest, redClosest, randDistance);
+  
+    // Animates a scoreboard constructed of both players 3 measurements
+    animateScoreBoard(greenScores, redScores);
+  
+    // Promt if user wants to save scores
+    // Button pressed --> true
+    // If button is not pressed in 5 sec --> false
+    bool saveScores = animateSavePrompt();
+  
+    if (saveScores) {
+      animateSaving();
+      // Save scores to database and return true if its successful, else return false
+      bool saveSuccess = saveScoresToDatabase(greenScores, redScores);
+      Serial.println("DATA SAVED!");
+  
+      // Prompt if Saving was successful
+      animateSaveDone(saveSuccess);
+    }
+  
+    // Animate that game is finished
+    animateGameFinished();
+    
+    Serial.println("------GAME DONE------");
+  
+    // Clear display an turn leds off
+    display.clearDisplay();
+    ledsOff();
+    delay(5000);
+  }
 }
 
 // Button debounce method
@@ -254,9 +290,30 @@ void buttonDebounce() {
   lastButtonState = reading;
 }
 
+// Animation to introduce user to device options
+void animateDeviceIntro() {
+  display.clearDisplay();
+  printMiddle("Hellow Stranger!", 1, 20);
+  display.display();
+  delay(2000);
+
+  display.clearDisplay();
+  printTop("Useage options:",1);
+  printMiddle("Press button", 1);
+  printBottom("> Real-time distance", 1, 5);
+  display.display();
+  delay(3000);
+
+  display.clearDisplay();
+  printTop("Useage options:",1);
+  printMiddle("Wait 10 seconds", 1, 20);
+  printBottom("> Proximity game", 1, 20);
+  display.display();
+}
+
 // Animates the intro of the game. 
 // Includes choosing a pair to play with and the countdown to the start of the game
-void animateIntro() {
+void animateGameIntro() {
   display.clearDisplay();
   printTop("Welcome!", 1, 35);
   display.display();
@@ -446,6 +503,7 @@ void animateAndDisplayWinner(char* winner, int greenClosest, int redClosest, int
   ledsOff();
 }
 
+// Displays both players scores on the UI screen
 void animateScoreBoard(int greenScores[], int redScores[]) {
   char* greenScoreRowLabel = "Green: ";
   char* redScoreRowLabel = "Red: ";
@@ -471,6 +529,8 @@ void animateScoreBoard(int greenScores[], int redScores[]) {
   delay(10000);
 }
 
+// Asks user if one wants to save measurements to external database
+// Returns: true, if button is pressed, else false
 bool animateSavePrompt() {
   display.clearDisplay();
   printTop("Press the button", 1, 20);
@@ -490,6 +550,7 @@ bool animateSavePrompt() {
   return false;
 }
 
+// Animates indication that saving process has started
 void animateSaving() {
   display.clearDisplay();
   printTop("Saving scores", 1);
@@ -512,6 +573,7 @@ void animateSaving() {
   }
 }
 
+// Animates if the save was successful or not, according given parameter
 void animateSaveDone(bool success) {
   display.clearDisplay();
   if (success) {
@@ -523,6 +585,7 @@ void animateSaveDone(bool success) {
   delay(2000);
 }
 
+// Animates that game is finished
 void animateGameFinished() {
   display.clearDisplay();
   printMiddle("Hope you had fun", 1, 10);
