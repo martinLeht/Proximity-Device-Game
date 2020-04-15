@@ -29,6 +29,11 @@
                     </td>
                 </ng-container>
 
+                <ng-container matColumnDef="goal">
+                    <th mat-header-cell *matHeaderCellDef> Goal distance </th>
+                    <td mat-cell *matCellDef="let game" [formGroup]="game"> {{game.get('goal').value}} </td>
+                </ng-container>
+
                 <ng-container matColumnDef="playerOneScores">
                     <th mat-header-cell *matHeaderCellDef> Player 1 Scores </th>
                     <td mat-cell *matCellDef="let game" [formGroup]="game"> {{game.get('greenScore').value}} </td>

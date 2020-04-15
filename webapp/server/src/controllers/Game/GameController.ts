@@ -10,10 +10,12 @@ export class GameController implements CrudController {
     public async create(req: Request, res: Response): Promise<any> {
         
         return new Promise<any>(async (resolve, reject) => {
+            const goal: number = req.body.goal;
             const greenScore: number[] = req.body.greenScore;
             const redScore: number[] = req.body.redScore;
 
             const game: IGame = new Game({
+                goal: goal,
                 greenScore: greenScore,
                 redScore: redScore
             });
@@ -74,12 +76,10 @@ export class GameController implements CrudController {
 
             let gameData: any = {
                 greenName: req.body.greenName,
-                redName: req.body.redName,
-                greenScore: req.body.greenScore,
-                redScore: req.body.redScore
+                redName: req.body.redName
             };
 
-            if (!gameData.greenName && !gameData.redName && !gameData.greenScore && !gameData.redScore) 
+            if (!gameData.greenName && !gameData.redName) 
                 reject({ error: 'No data provided for updating' });
             
             gameData = this.clean(gameData);
@@ -125,6 +125,7 @@ export class GameController implements CrudController {
             gameId: entry["gameId"],
             greenName: entry["greenName"],
             redName: entry["redName"],
+            goal: entry["goal"],
             greenScore: entry["greenScore"],
             redScore: entry["redScore"],
             createdAt: entry["createdAt"],

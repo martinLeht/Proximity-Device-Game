@@ -13,7 +13,7 @@ import { FormGroup, FormBuilder, FormArray } from '@angular/forms';
 
 export class ScoreboardComponent implements OnInit {
 
-  displayedColumns: string[] = ['gameId', 'playerOne', 'playerTwo', 'playerOneScores', 'playerTwoScores', 'createdAt', 'actions'];
+  displayedColumns: string[] = ['gameId', 'playerOne', 'playerTwo', 'goal', 'playerOneScores', 'playerTwoScores', 'createdAt', 'actions'];
 
   gameForm: FormGroup;
 
@@ -62,6 +62,7 @@ export class ScoreboardComponent implements OnInit {
     } else {
       game.enable();
       game.get('gameId').disable();
+      game.get('goal').disable();
       game.get('greenScore').disable();
       game.get('redScore').disable();
       game.get('createdAt').disable();

@@ -8,6 +8,7 @@ const GameSchema: Schema = new Schema({
     gameId: { type: Number},
     greenName: { type: String, default: 'Green', required: true },
     redName: { type: String, default: 'Red', required: true },
+    goal: { type: Number },
     greenScore: [Number],
     redScore: [Number],
     createdAt: { type: Date, default: Date.now },

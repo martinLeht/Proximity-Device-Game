@@ -68,7 +68,7 @@ char* combineStringAndDigit(const char* string, int, bool digitAfterString = tru
 char* concatenate(const char* first, const char* second);
 
 // Wifi connectivity methods
-bool saveScoresToDatabase(int[], int[]);
+bool saveScoresToDatabase(int, int[], int[]);
 
 void setup() {
   Serial.begin (9600);
@@ -249,7 +249,7 @@ void loop() {
     if (saveScores) {
       animateSaving();
       // Save scores to database and return true if its successful, else return false
-      bool saveSuccess = saveScoresToDatabase(greenScores, redScores);
+      bool saveSuccess = saveScoresToDatabase(randDistance, greenScores, redScores);
       Serial.println("DATA SAVED!");
   
       // Prompt if Saving was successful
@@ -696,7 +696,7 @@ char* concatenate(const char* first, const char* second) {
  * 
  * Returns: true, IF everything goes well, else return false          
  */
-bool saveScoresToDatabase(int greenScores[], int redScores[]) {
+bool saveScoresToDatabase(int goalDistance, int greenScores[], int redScores[]) {
   //Wait for the WiFI connection completion
   while (WiFi.status() != WL_CONNECTED) {  
   
@@ -733,6 +733,7 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
     redScoresChar = concatenate(redScoresChar, "]");
 
     // Serializing the scores to JSON doc
+    doc["goal"] = goalDistance;
     doc["greenScore"] = serialized(greenScoresChar);
     doc["redScore"] = serialized(redScoresChar);
 
@@ -836,6 +837,7 @@ bool saveScoresToDatabase(int greenScores[], int redScores[]) {
         return true;
       }  
     }
+    return true;
   } else { // Whole wifi connecting went wrong
     Serial.println("Error in WiFi connection");
     return false; 
