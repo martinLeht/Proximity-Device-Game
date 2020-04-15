@@ -1,4 +1,4 @@
-# Hoods Frontend + BackEnd
+# Proximity Game / Device firmware + Webapp
 
 
 

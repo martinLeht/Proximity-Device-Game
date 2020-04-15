@@ -31,13 +31,13 @@ Adafruit_SSD1306 display(OLED_RESET);
 #define LENGTH(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // Declare variables for wifi credntials
-const char* ssid = "XXX"; 
-const char* password = "XXX";
+const char* ssid = "Saitaman Puhelin"; 
+const char* password = "HeroSaitama666";
  
 // Define API credentials (SHA-2 fingerprint needed inorder to connect to HTTPS)
 const char* host = "proximity-game-server.herokuapp.com";
 const char* apiEntryPoint = "/games";
-const char* fingerPrint = "XXX";
+const char* fingerPrint = "083b717202436ecaed428693ba7edf81c4bc6230";
 
 // Global variables to implement button interaction
 int lastButtonState = LOW;
