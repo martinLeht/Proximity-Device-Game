@@ -128,6 +128,14 @@ cd webapp/client
 ng serve
 ```
 
+### Running Server side API unit tests
+
+```bash
+cd webapp/server
+npm run test-dev
+```
+
+
 ### Building Angular Frontend for production
 
 ```bash
