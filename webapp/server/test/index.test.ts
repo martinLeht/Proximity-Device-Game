@@ -104,6 +104,36 @@ describe("Functionality of Games REST API", () => {
       });
   });
 
+  it("Gets game result by game id from API to ensure update worked", done => {
+    chai
+      .request(`localhost:${port}`)
+      .get("/games/" + gameIdOnCreation)
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        const gameEntry = res.body;
+        expect(res).to.have.status(200);
+        expect(gameEntry.gameId).to.equals(gameIdOnCreation);
+        expect(gameEntry.greenName).to.equals("Frodo");
+        expect(gameEntry.redName).to.equals("Sam");
+        expect(gameEntry.goal).to.equals(123);
+
+        assert.isArray(gameEntry.greenScore);
+        assert.isArray(gameEntry.redScore);
+        const greenScore: Array<number> = gameEntry.greenScore;
+        const redScore: Array<number> = gameEntry.redScore;
+
+        let expectedGreenPoint = 1;
+        let expectedRedPoint = 4;
+        for (let i=0; i < 3; i++) {
+            expect(greenScore[i]).to.equals(expectedGreenPoint);
+            expect(redScore[i]).to.equals(expectedRedPoint);
+            expectedGreenPoint++;
+            expectedRedPoint++;
+        }
+        done();
+      });
+  });
+
   it("Deletes game entry through API", done => {
     chai
       .request(`localhost:${port}`)
