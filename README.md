@@ -136,12 +136,3 @@ npm run test-dev
 ```
 
 
-### Building Angular Frontend for production
-
-```bash
-cd webapp/client
-ng build --prot
-```
-Built files can be found from `client/dist/hoods-login`
-
-
