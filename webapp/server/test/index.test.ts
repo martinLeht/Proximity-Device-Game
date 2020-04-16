@@ -35,9 +35,9 @@ describe("Functionality of Games REST API", () => {
           redScore: [4, 5, 6]
       })
       .end((err, res) => {
+        expect(res).to.have.status(200);
         const gameEntry = res.body;
         gameIdOnCreation = gameEntry.gameId;
-        expect(res).to.have.status(200);
         expect(gameEntry.greenName).to.equals("Green");
         expect(gameEntry.redName).to.equals("Red");
         expect(gameEntry.goal).to.equals(123);
@@ -66,7 +66,6 @@ describe("Functionality of Games REST API", () => {
       .end((err, res) => {
         expect(res).to.have.status(200);
         const gameEntry = res.body;
-        expect(res).to.have.status(200);
         expect(gameEntry.gameId).to.equals(gameIdOnCreation);
         expect(gameEntry.greenName).to.equals("Green");
         expect(gameEntry.redName).to.equals("Red");
@@ -111,7 +110,6 @@ describe("Functionality of Games REST API", () => {
       .end((err, res) => {
         expect(res).to.have.status(200);
         const gameEntry = res.body;
-        expect(res).to.have.status(200);
         expect(gameEntry.gameId).to.equals(gameIdOnCreation);
         expect(gameEntry.greenName).to.equals("Frodo");
         expect(gameEntry.redName).to.equals("Sam");
